@@ -71,8 +71,6 @@ salary_stats.to_csv('python_salary_stats.csv', index=False)
 # Завантажити файл на локальний комп'ютер
 files.download('python_salary_stats.csv')
 
-import matplotlib.pyplot as plt
-
 # Гістограма розподілу зарплати на місяць
 plt.figure(figsize=(10, 6))
 plt.hist(df['Зарплата на місяць'], bins=20, color='skyblue', edgecolor='black')
