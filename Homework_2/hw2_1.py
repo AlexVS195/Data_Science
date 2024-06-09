@@ -35,7 +35,7 @@ print(df.dtypes)
 
 # Заміна типів нечислових колонок на числові
 for col in df.columns:
-    if df[col].dtype == 'object':
+    if df[col].dtype == object and col != 'Регіон':
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
 # Частка пропусків у кожній колонці
@@ -45,7 +45,8 @@ print(df.isnull().sum() / len(df))
 df = df.drop(df.index[-1])
 
 # Заміна пропусків середніми значеннями стовпців
-df = df.fillna(df.mean())
+numeric_columns = df.columns.difference(['Регіон'])
+df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
 
 # Регіони з вищою народжуваністю в 2019 році
 average_2019 = df[df.columns[-1]].mean()
@@ -58,16 +59,32 @@ print(max_birth_rate_2014)
 
 # Стовпчикова діаграма народжуваності по регіонам у 2019 році
 plt.figure(figsize=(10, 5))
-df.sort_values(by=df.columns[-1], ascending=False)[df.columns[-1]].plot(kind='bar')
+
+# Сортуємо дані за зменшенням коефіцієнта народжуваності у останньому стовпці (2019 рік)
+sorted_df = df.sort_values(by=df.columns[-1], ascending=False)
+
+# Вибираємо останній стовпець для побудови графіка
+last_column = df.columns[-1]
+
+# Будуємо стовпчикову діаграму
+sorted_df[last_column].plot(kind='bar', color='skyblue')
+
+# Встановлюємо назви регіонів як мітки на осі X
+plt.xticks(range(len(sorted_df)), sorted_df['Регіон'], rotation=90)
+
 plt.title('Народжуваність по регіонах у 2019 році')
 plt.ylabel('Коефіцієнт народжуваності')
 plt.xlabel('Регіон')
+plt.tight_layout()
 plt.show()
 
 # Побудова графіка розподілу рівня народжуваності по регіонах за роками
 plt.figure(figsize=(12, 8))
+
+# Проходимося по стовпцях, крім першого (назви регіонів)
 for i in range(1, len(df.columns)):
-    plt.plot(df.index, df[df.columns[i]], label=df.columns[i])
+    plt.plot(df['Регіон'], df[df.columns[i]], label=df.columns[i])
+
 plt.title('Рівень народжуваності по регіонах за роками')
 plt.xlabel('Регіон')
 plt.ylabel('Коефіцієнт народжуваності')
@@ -77,8 +94,14 @@ plt.tight_layout()
 plt.show()
 
 # Побудова графіка розподілу середньої народжуваності за роками
+numeric_columns = df.columns.difference(['Регіон'])
+
+# Обчислення середніх значень для числових стовпців
+mean_values = df[numeric_columns].mean()
+
+# Побудова графіка розподілу середньої народжуваності за роками
 plt.figure(figsize=(10, 6))
-df.mean().iloc[5:].plot(kind='bar', color='skyblue')
+mean_values.plot(kind='bar', color='skyblue')
 plt.title('Середня народжуваність за роками')
 plt.xlabel('Рік')
 plt.ylabel('Середній коефіцієнт народжуваності')
