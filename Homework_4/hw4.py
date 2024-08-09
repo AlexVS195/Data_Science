@@ -139,17 +139,10 @@ from sklearn.linear_model import LinearRegression
 
 """
 
-X = df.drop('cnt', axis=1)  # Ознаки
-y = df['cnt']  # Цільова змінна
+from sklearn.linear_model import LinearRegression
 
-model = LinearRegression()
-model.fit(X, y)
-
-feature_names = X.columns
-coefficients = model.coef_
-
-for feature, coef in zip(feature_names, coefficients):
-    print(f"{feature}: {coef}")
+reg = LinearRegression().fit(X, y)
+[i for i in list(zip(df.columns, reg.coef_))]
 
 """Ми бачимо, що ваги при лінійно-залежних ознаках за модулем значно більші, ніж при інших ознаках. Щоб зрозуміти, чому так сталося, згадаємо аналітичну формулу, за якою обчислюються ваги лінійної моделі в методі найменших квадратів:
 
@@ -170,27 +163,13 @@ $$w = (X^TX)^{-1} X^T y$$
 from sklearn.linear_model import Ridge, Lasso
 from sklearn.preprocessing import StandardScaler
 
-X = df.drop('cnt', axis=1)  # Ознаки
-y = df['cnt']  # Цільова змінна
-
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-lasso_model = Lasso()
-lasso_model.fit(X_scaled, y)
-
-print("\nLasso Coefficients:")
-for feature, coef in zip(X.columns, lasso_model.coef_):
-    print(f"{feature}: {coef}")
+lasso = Lasso().fit(X, y)
+[i for i in list(zip(df.columns, lasso.coef_))]
 
 """Навчіть лінійну модель з $L_2$-регуляризацією (клас Ridge) і виведіть ваги."""
 
-ridge_model = Ridge()
-ridge_model.fit(X_scaled, y)
-
-print("Ridge Coefficients:")
-for feature, coef in zip(X.columns, ridge_model.coef_):
-    print(f"{feature}: {coef}")
+ridge = Ridge().fit(X, y)
+[i for i in list(zip(df.columns, ridge.coef_))]
 
 """### Завдання 7
 
@@ -287,18 +266,23 @@ from sklearn.linear_model import LassoCV
 
 SEED = 42
 alphas = np.arange(1, 100, 5)
-
 regressor = LassoCV(random_state=SEED, alphas=alphas, cv=3)
 regressor.fit(X, y)
 
-mse_values = np.mean(regressor.mse_path_, axis=1)
-data_x_y = np.concatenate((regressor.alphas_.reshape(-1, 1), mse_values.reshape(-1, 1)), axis=1)
+print(f"Shape of regressor.coef_: {regressor.coef_.shape}")
+print(f"Shape of regressor.alphas: {regressor.alphas_.shape}")
+print(f"Shape of regressor.mse_path_: {regressor.mse_path_.shape}")
+print(f"Alphas used: {regressor.alphas_}")
 
-create_plot(data_x_y, 'Avg MSE', 'Alpha', 'MSE')
+mse_values = np.mean(regressor.mse_path_, axis=1)
+data = np.vstack((regressor.alphas_, mse_values))
+
+create_plot(data.T, "Mean Squared Error vs Alpha", "Alpha", "MSE")
 
 print("Вибране значення alpha:", regressor.alpha_)
 print("Коефіцієнти ознак:")
-for feature, coef in zip(X.columns, regressor.coef_):
+feature_names = df_shuffled.columns[:-1]
+for feature, coef in zip(feature_names, regressor.coef_):
     print(f"{feature}: {coef}")
 
 """Отже, ми вибрали певний параметр регуляризації. Давайте подивимося, які б ми вибирали alpha, якби ділили вибірку лише один раз на навчальну та тестову, тобто розглянемо траєкторії MSE, що відповідають окремим блокам вибірки.
